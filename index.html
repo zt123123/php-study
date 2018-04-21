@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="jquery.min.js"></script>
+	<script src="artTemplate.js"></script>
+	<style>
+	body{
+		margin: 0;
+		padding: 0;
+	}
+		table{
+			width: 100%;
+			text-align: center;
+			table-layout: fixed;
+			border-collapse: collapse;
+		}
+		tr,td,th{
+			padding: 10px;
+			border: 1px solid #000;
+		}
+	</style>
+</head>
+<body>
+	
+	<div class="form">
+		<p>
+			<label>产品</label>
+			<input type="text" name="name" id="name">
+		</p>		
+		<p>
+			<label>价格</label>
+			<input type="text" name="price" id="price">
+		</p>		
+		<p>
+			<label>状态</label>
+			<input type="text" name="status" id="status">
+		</p>
+		<p>
+			<input type="button" id="submit" value="提交">
+			<input type="button" id="query" value="查询">
+		</p>
+	</div>
+
+<div id="box">
+	
+</div>
+
+<script type="text/html" id="edit">
+	<div class="form">
+		{{each data value}}
+		<p>
+			<input value={{value.id}} type="hidden" name="id" class="id">
+		</p>	
+		<p>
+			<label>产品</label>
+			<input value={{value.name}} type="text" name="name" class="name">
+		</p>		
+		<p>
+			<label>价格</label>
+			<input value={{value.price}} type="text" name="price" class="price">
+		</p>		
+		<p>
+			<label>状态</label>
+			<input value={{value.status}} type="text" name="status" class="status">
+		</p>
+		<p>
+			<input type="button" id="update" value="修改">
+		</p>
+		{{/each}}
+	</div>
+</script>
+
+<script type="text/html" id="tpl">
+	
+	<table>
+		<tr>
+			<th>编号</th>
+			<th>产品</th>
+			<th>价格</th>
+			<th>状态</th>
+			<th>操作</th>
+		</tr>
+		{{ each data value i }}
+		<tr>
+			<td>{{i+1}}</td>
+			<td>{{value.name}}</td>
+			<td>{{value.price}}</td>
+			<td>{{value.status==1?'上线':'下架'}}</td>
+			<td>
+				<button class="edit" data-id={{value.id}}>编辑</button>
+				<button class="del" data-id={{value.id}}>删除</button>
+			</td>
+		</tr>
+		{{/each}}
+	</table>
+</script>
+
+	<script type="text/javascript">
+		$(function(){
+			query("tpl");
+		})
+
+		function edit(id){
+			var id=id;
+			query("edit",id);
+		}
+
+		function del(id){
+			$.ajax({
+				url: 'del.php',
+				type: 'POST',
+				data:{
+					id:id
+				},
+				dataType: 'json'
+			})
+			.done(function(data) {
+				query("tpl");
+			})
+			.fail(function(error) {
+				console.log(error);
+			})
+		}
+
+		function query(tpl,id){
+			$.ajax({
+				url: 'query.php',
+				type: 'POST',
+				dataType: 'json',
+				data:{id:id}
+			})
+			.done(function(data) {
+				render(tpl,data);
+			})
+			.fail(function(error) {
+				console.log(error);
+			})
+		}
+		$("#query").on('click',function() {
+			query("tpl");
+		});
+
+
+
+		$("#submit").on('click', function() {
+			$.ajax({
+				url: 'add.php',
+				type: 'post',
+				dataType: 'json',
+				data: {
+					name: $("#name").val(),
+					price: $("#price").val(),
+					status: $("#status").val()
+				},
+			})
+			.done(function(data) {
+				query("tpl");
+			})
+			.fail(function() {
+				console.log("error");
+			})
+		});
+
+		function update(id){
+			$.ajax({
+				url: 'edit.php',
+				type: 'POST',
+				data:{
+					id:id,
+					name: $(".name").val(),
+					price: $(".price").val(),
+					status: $(".status").val()
+				},
+				dataType: 'json'
+			})
+			.done(function(data) {
+				query("tpl");
+			})
+			.fail(function(error) {
+				console.log(error);
+			})
+		}
+
+		function render(tpl,data) {
+			var tpl=template(tpl,{data:data})
+			$("#box").html(tpl);
+
+			$(".edit").on('click', function() {
+				edit($(this).data("id"));
+			});
+
+			$(".del").on('click', function() {
+				del($(this).data("id"));
+			});
+			$("#update").on('click', function() {
+				update($(".id").val());
+			});
+
+		}
+	</script>
+</body>
+</html>
